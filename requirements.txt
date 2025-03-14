@@ -1,0 +1,5 @@
+Flask
+whisper
+torch
+numpy
+ffmpeg-python

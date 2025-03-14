@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Law Advisor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Tax Law Advisory System</h1>
+            <p>Get quick and easy answers to your tax-related questions.</p>
+        </header>
+
+        <div class="content">
+            <!-- Main Section -->
+            <main>
+                <!-- Text Query Section -->
+                <section class="query-section">
+                    <h2>🔍 Enter Your Tax Query</h2>
+                    <form action="/process" method="post">
+                        <div class="input-container">
+                            <input type="text" id="text_input" name="text_input" placeholder="E.g., What is the GST rate for services?" required>
+                            <button type="submit">Search</button>
+                        </div>
+                    </form>
+                </section>
+
+                <h3 class="separator">OR</h3>
+
+                <!-- Voice Query Section -->
+                <section class="voice-section">
+                    <h2>🎤 Speak Your Query</h2>
+                    <div class="button-group">
+                        <button id="start-recording">🎤 Start Recording</button>
+                        <button id="stop-recording" disabled>⏹️ Stop & Submit</button>
+                    </div>
+
+                    <form id="voiceForm" action="/voice_process" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="text_input" id="voiceText">
+                    </form>
+                    <h3>Transcribed Text:</h3>
+                    <p id="transcription">
+                        {% if voice_text %}
+                            {{ voice_text }}
+                        {% else %}
+                            Your transcribed text will appear here.
+                        {% endif %}
+                    </p>
+
+                </section>
+                <section class="keyword-section">
+                    <h2>🔑 Extracted Keywords</h2>
+                    <div class="keyword-box">
+                        {% if keywords %}
+                            <p><strong>Relevant Tax Keywords:</strong> {{ ", ".join(keywords) }}</p>
+                        {% else %}
+                            <p> Give any query first</p>
+                        {% endif %}
+                    </div>
+                </section>
+                <!-- Results Section -->
+                <section class="result-section">
+                    <h2>📜 Results</h2>
+                    <div class="result-box">
+                        <p id="search-result"> {% if result %} {{ result }} {% else %} Your results will appear here. {% endif %}</p>
+                    </div>
+                </section>
+            </main>
+
+            <!-- "Did You Know?" Sidebar -->
+            <aside class="sidebar">
+                <h2>💡 Did You Know?</h2>
+                <div class="fact-box">
+                    <p id="fact-text">
+                       Loading interestin tax facts here...
+                    </p>
+                </div>
+            </aside>
+        </div>
+    </div>
+</body>
+</html>
