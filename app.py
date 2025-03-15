@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import os
 from keybert import KeyBERT
-
+import openai
 import time
 import torch
 import soundfile as sf
@@ -11,9 +11,56 @@ from datetime import datetime
 import speech_recognition as sr
 from whisper_utils import transcribe_audio  # Import Whisper function
 
-kw_model = KeyBERT("sentence-transformers/all-MiniLM-L6-v2")
-TAX_KEYWORDS = {"tax", "gst", "income", "deduction", "exemption", "refund", "section", "act", "law", "finance", "return", "penalty", "capital gains", "investment", "rebate"}
+from keybert import KeyBERT
+from sentence_transformers import SentenceTransformer
+# Use a pipeline as a high-level helper
+from transformers import pipeline
+# Load model directly
+from transformers import AutoTokenizer, AutoModelForPreTraining
 
+tokenizer = AutoTokenizer.from_pretrained("law-ai/InLegalBERT")
+model = AutoModelForPreTraining.from_pretrained("law-ai/InLegalBERT")
+pipe = pipeline("fill-mask", model="law-ai/InLegalBERT")
+# Load a legal-specific transformer for better results
+ # Load InLegalBERT
+kw_model = KeyBERT(model) 
+# import OpenAI from "openai";
+# const client = new OpenAI();
+# client = openai.OpenAI(api_key="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")
+# models = client.models.list()
+# for model in models.data:
+#     print(model.id)
+#query = "What are the tax exemptions for startups under the Indian Income Tax Act?"
+#keywords = kw_model.extract_keywords(query, keyphrase_ngram_range=(1,3), stop_words="english", top_n=10)
+
+#print("Extracted Keywords:", keywords)
+
+# import spacy
+
+# # Load a pre-trained NER model for legal texts
+# nlp = spacy.load("nlpaueb/legal-bert-base-uncased")  # Free model trained on legal text
+
+
+# text = "Are there any capital gains tax exemptions under section 54 of the Income Tax Act?"
+# doc = nlp(text)
+
+# keywords = [ent.text for ent in doc.ents]  # Extract named entities
+# print("Extracted Keywords:", keywords)
+
+# from transformers import pipeline
+
+# generator = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct")
+# query = "What are the tax benefits for small businesses under Indian law?"
+
+# prompt = f"Extract tax-related keywords from this: {query}"
+# response = generator(prompt, max_length=50)
+
+# print("Extracted Keywords:", response)
+
+
+# kw_model = KeyBERT("sentence-transformers/all-MiniLM-L6-v2")
+TAX_KEYWORDS = {"tax", "gst", "income", "deduction", "exemption", "refund", "section", "act", "law", "finance", "return", "penalty", "capital gains", "investment", "rebate"}
+#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
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 UPLOAD_FOLDER = "uploads1"
@@ -35,14 +82,24 @@ def process():
     # Placeholder for tax law search
     print(f"Text input: {text_input}")  # Debugging
     # Extract keywords using KeyBERT
-    keywords = kw_model.extract_keywords(text_input, keyphrase_ngram_range=(1,2), stop_words="english", top_n=5)
+    keywords = kw_model.extract_keywords(text_input, keyphrase_ngram_range=(1,3), stop_words="english", top_n=12)
     
     # Filter keywords to keep only relevant tax-related terms
     filtered_keywords = [kw for kw, score in keywords if any(term in kw.lower() for term in TAX_KEYWORDS)]
     if not filtered_keywords:
         filtered_keywords = ["Not found"]
     print(f"Filtered keywords: {filtered_keywords}")  # Debugging
+#     prompt = f"Extract Indian tax law keywords from this query: '{text_input}'. Return as a comma-separated list."
+   
+#     response = client.chat.completions.create(
+#     model="gpt-4o",
+#     messages=[{"role": "user", "content": prompt}],
+#     temperature=0.3,
+#     max_tokens=50
+# )
 
+#     gpt_keywords_text = response.choices[0].message.content
+#     keywords = [kw.strip() for kw in gpt_keywords_text.split(",")]
     # Placeholder for tax law search result
     result = f"Searching for relevant tax laws related to: {text_input}"
     
@@ -52,15 +109,23 @@ def process():
 def voice_process():
         transcription = request.form.get("voiceText", "")
         print(f"Text input: {transcription}")  # Debugging
-
+        # prompt = f"Extract Indian tax law keywords from this query: '{transcription}'. Return as a comma-separated list."
+        # response = openai.ChatCompletion.create(
+        # model="gpt-4",  # or "gpt-3.5-turbo"
+        # messages=[{"role": "user", "content": prompt}],
+        # temperature=0.3,
+        # max_tokens=50
+        # )
+        # keywords_text = response["choices"][0]["message"]["content"]
+        # keywords = [kw.strip() for kw in keywords_text.split(",")]
         if not transcription:
             return render_template("index.html", result="No transcription provided!", transcribed_text=None, keywords=None)
 
         # Extract keywords using KeyBERT
-        keywords = kw_model.extract_keywords(transcription, keyphrase_ngram_range=(1,2), stop_words="english", top_n=5)
+        keyword = kw_model.extract_keywords(transcription, keyphrase_ngram_range=(1,2), stop_words="english", top_n=12)
 
         # Filter keywords to keep only relevant tax-related terms
-        filtered_keywords = [kw for kw, score in keywords if any(term in kw.lower() for term in TAX_KEYWORDS)]
+        filtered_keywords = [kw for kw, score in keyword if any(term in kw.lower() for term in TAX_KEYWORDS)]
         if not filtered_keywords:
             filtered_keywords = ["Not found"]
         print(f"Filtered keywords: {filtered_keywords}")  # Debugging

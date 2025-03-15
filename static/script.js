@@ -49,7 +49,51 @@ function showLoading(message) {
     }}
 
 // Change fact every 5 seconds
+import OpenAI from "openai";
+const client = new OpenAI();
+const queryForm = document.querySelector("form[action='/process']");
+queryForm.addEventListener("submit", async (event) => {
+    
+    event.preventDefault();
+    const formData = new FormData(queryForm);
+    const textInput = formData.get("text_input");
+    let prompt = `Extract Indian tax law keywords from this query: '${textInput}'. Return as a comma-separated list.`
+    const completion = await client.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{
+            role: "user",
+            content: prompt,
+        }],
+    });
+    // showLoading("Processing your text input");
+
+    // try {
+    //     const response = await fetch("/process", {
+    //         method: "POST",
+    //         body: formData
+    //     });
+    //     if (!response.ok) {
+    //         throw new Error(`Server error: ${response.status}`);
+    //     }
+    //     const data = await response.json();
+    //     if (data.result) {
+    //         searchResult.innerText = data.result;
+    //     } else {
+    //         searchResult.innerText = "No results found.";
+    //     }
+    // } catch (error) {
+    //     searchResult.innerText = "Error processing text input.";
+    //     console.error("Text Input Error:", error);
+    // }
+    
+   
+    
+    console.log(completion.choices[0].message.content);
+});
 //setInterval(changeFact, 5000);
+
+
+
 
 // Start recording
 startButton.addEventListener("click", async () => {
